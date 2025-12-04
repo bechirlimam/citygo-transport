@@ -1,4 +1,73 @@
 import React, { useState } from "react";
+function AddressInput({ label, value, onChange, onSelect }) {
+  const [suggestions, setSuggestions] = useState([]);
+
+  const search = async (text) => {
+    onChange(text);
+
+    if (text.length < 3) {
+      setSuggestions([]);
+      return;
+    }
+
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(text)}&limit=5`
+    );
+    const data = await res.json();
+    setSuggestions(data);
+  };
+
+  return (
+    <div style={{ position: "relative", marginBottom: "20px" }}>
+      <input
+        type="text"
+        placeholder={label}
+        value={value}
+        onChange={(e) => search(e.target.value)}
+        style={{
+          width: "100%",
+          padding: "10px",
+          borderRadius: "5px",
+          border: "1px solid #ccc",
+        }}
+      />
+
+      {/* LISTE DES SUGGESTIONS */}
+      {suggestions.length > 0 && (
+        <ul
+          style={{
+            position: "absolute",
+            top: "45px",
+            width: "100%",
+            background: "white",
+            boxShadow: "0px 2px 10px rgba(0,0,0,0.1)",
+            padding: "0",
+            margin: "0",
+            listStyle: "none",
+            zIndex: 10,
+          }}
+        >
+          {suggestions.map((s) => (
+            <li
+              key={s.place_id}
+              onClick={() => {
+                onSelect(s);
+                setSuggestions([]);
+              }}
+              style={{
+                padding: "10px",
+                cursor: "pointer",
+                borderBottom: "1px solid #eee",
+              }}
+            >
+              {s.display_name}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
 
 export default function CityGoSite() {
   const [pickup, setPickup] = useState("");
