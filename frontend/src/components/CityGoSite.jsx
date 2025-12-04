@@ -1,14 +1,57 @@
-const express = require("express");
-const router = express.Router();
-const fetch = require("node-fetch");
+// ---- ESTIMATION TARIF ----
+const getEstimate = async () => {
+  if (!pickup || !dropoff) {
+    setEstimate("Merci de remplir départ + arrivée.");
+    return;
+  }
+<button 
+  onClick={getEstimate}
+  style={{
+    padding: "10px",
+    marginTop: "10px",
+    background: "#444",
+    color: "white",
+    borderRadius: "5px",
+    border: "none",
+    cursor: "pointer"
+  }}
+>
+  Estimer le prix
+</button>
 
-// TARIFS
-const DAY_RATE = 1.50;
-const NIGHT_RATE = 2.00;
-const MINIMUM_FARE = 15;
-const APPROACH_RATE = 0.40; // optionnel
-const UBER_DISCOUNT = 4;    // réduction style Uber
+{estimate && (
+  <p style={{ marginTop: "10px", fontWeight: "bold" }}>
+    {estimate}
+  </p>
+)}
 
+  try {
+    setEstimate("Calcul en cours...");
+
+    const resp = await fetch("https://citygo-transport.onrender.com/api/estimate", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        pickup,
+        dropoff,
+        datetimeISO: new Date().toISOString()
+      })
+    });
+
+    const data = await resp.json();
+
+    if (!resp.ok) {
+      setEstimate("Erreur : " + data.error);
+      return;
+    }
+
+    setEstimate(`Prix estimé : ${data.breakdown.finalFare} €`);
+  } catch (err) {
+    console.error(err);
+    setEstimate("Erreur interne.");
+  }
 function isNight(dateString) {
   const hour = new Date(dateString).getHours();
   return hour >= 21 || hour < 6;
@@ -32,6 +75,26 @@ router.post("/", async (req, res) => {
 
     const start = await geo(pickup);
     const end = await geo(dropoff);
+<button 
+  onClick={getEstimate}
+  style={{
+    padding: "10px",
+    marginTop: "10px",
+    background: "#444",
+    color: "white",
+    borderRadius: "5px",
+    border: "none",
+    cursor: "pointer"
+  }}
+>
+  Estimer le prix
+</button>
+
+{estimate && (
+  <p style={{ marginTop: "10px", fontWeight: "bold" }}>
+    {estimate}
+  </p>
+)}
 
     if (!start || !end) {
       return res.json({ error: "Adresse introuvable" });
