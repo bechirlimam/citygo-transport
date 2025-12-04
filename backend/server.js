@@ -1,3 +1,4 @@
+const estimate = require('./routes/estimate');
 const express = require('express');
 const bodyParser = require('body-parser');
 const payments = require('./routes/payments');
@@ -15,3 +16,4 @@ app.get('/', (req, res) => res.send('CityGo Transport backend'));
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => console.log(`Server listening on ${PORT}`));
+app.use('/api/estimate', estimate);
