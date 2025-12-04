@@ -143,3 +143,25 @@ export default function CityGoSite() {
   onChange={setDropoff}
   onSelect={(place) => setDropoff(place.display_name)}
 />
+      <button
+        onClick={getEstimate}
+        style={{
+          padding: "10px",
+          background: "#444",
+          color: "white",
+          border: "none",
+          borderRadius: "5px",
+          cursor: "pointer",
+        }}
+      >
+        Estimer le prix
+      </button>
+
+      {estimate && (
+        <p style={{ marginTop: "20px", fontWeight: "bold" }}>
+          {estimate}
+        </p>
+      )}
+    </div>
+  );
+}
