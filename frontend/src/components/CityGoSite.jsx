@@ -1,142 +1,84 @@
-// ---- ESTIMATION TARIF ----
-const getEstimate = async () => {
-  if (!pickup || !dropoff) {
-    setEstimate("Merci de remplir départ + arrivée.");
-    return;
-  }
-<button 
-  onClick={getEstimate}
-  style={{
-    padding: "10px",
-    marginTop: "10px",
-    background: "#444",
-    color: "white",
-    borderRadius: "5px",
-    border: "none",
-    cursor: "pointer"
-  }}
->
-  Estimer le prix
-</button>
+import React, { useState } from "react";
 
-{estimate && (
-  <p style={{ marginTop: "10px", fontWeight: "bold" }}>
-    {estimate}
-  </p>
-)}
+export default function CityGoSite() {
+  const [pickup, setPickup] = useState("");
+  const [dropoff, setDropoff] = useState("");
+  const [estimate, setEstimate] = useState("");
 
-  try {
-    setEstimate("Calcul en cours...");
-
-    const resp = await fetch("https://citygo-transport.onrender.com/api/estimate", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        pickup,
-        dropoff,
-        datetimeISO: new Date().toISOString()
-      })
-    });
-
-    const data = await resp.json();
-
-    if (!resp.ok) {
-      setEstimate("Erreur : " + data.error);
+  // ---- ESTIMATION ----
+  const getEstimate = async () => {
+    if (!pickup || !dropoff) {
+      setEstimate("Merci de remplir départ et arrivée.");
       return;
     }
 
-    setEstimate(`Prix estimé : ${data.breakdown.finalFare} €`);
-  } catch (err) {
-    console.error(err);
-    setEstimate("Erreur interne.");
-  }
-function isNight(dateString) {
-  const hour = new Date(dateString).getHours();
-  return hour >= 21 || hour < 6;
+    try {
+      setEstimate("Calcul en cours...");
+
+      const response = await fetch("http://localhost:4000/api/estimate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          from: { lat: 48.8566, lng: 2.3522 }, // exemple FAUT remplacer par vraie géoloc
+          to: { lat: 48.8666, lng: 2.3722 }     // exemple FAUT remplacer
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setEstimate("Erreur : " + data.error);
+        return;
+      }
+
+      setEstimate(`Distance : ${data.distance} km — Prix : ${data.price} €`);
+    } catch (err) {
+      console.error(err);
+      setEstimate("Erreur interne.");
+    }
+  };
+
+  return (
+    <div style={{ padding: "20px" }}>
+      <h2>Estimation de trajet</h2>
+
+      <input
+        type="text"
+        placeholder="Adresse de départ"
+        value={pickup}
+        onChange={(e) => setPickup(e.target.value)}
+        style={{ padding: "10px", width: "100%", marginBottom: "10px" }}
+      />
+
+      <input
+        type="text"
+        placeholder="Adresse d'arrivée"
+        value={dropoff}
+        onChange={(e) => setDropoff(e.target.value)}
+        style={{ padding: "10px", width: "100%", marginBottom: "10px" }}
+      />
+
+      <button
+        onClick={getEstimate}
+        style={{
+          padding: "10px",
+          background: "#444",
+          color: "white",
+          border: "none",
+          borderRadius: "5px",
+          cursor: "pointer",
+        }}
+      >
+        Estimer le prix
+      </button>
+
+      {estimate && (
+        <p style={{ marginTop: "20px", fontWeight: "bold" }}>
+          {estimate}
+        </p>
+      )}
+    </div>
+  );
 }
-
-router.post("/", async (req, res) => {
-  const { pickup, dropoff, date } = req.body;
-
-  if (!pickup || !dropoff) {
-    return res.status(400).json({ error: "Pickup and dropoff required" });
-  }
-
-  try {
-    // 1) Geocodage
-    const geo = async addr => {
-      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addr)}&limit=1`;
-      const r = await fetch(url);
-      const d = await r.json();
-      return d[0] ? [parseFloat(d[0].lon), parseFloat(d[0].lat)] : null;
-    };
-
-    const start = await geo(pickup);
-    const end = await geo(dropoff);
-<button 
-  onClick={getEstimate}
-  style={{
-    padding: "10px",
-    marginTop: "10px",
-    background: "#444",
-    color: "white",
-    borderRadius: "5px",
-    border: "none",
-    cursor: "pointer"
-  }}
->
-  Estimer le prix
-</button>
-
-{estimate && (
-  <p style={{ marginTop: "10px", fontWeight: "bold" }}>
-    {estimate}
-  </p>
-)}
-
-    if (!start || !end) {
-      return res.json({ error: "Adresse introuvable" });
-    }
-
-    // 2) Route GPS (OpenRouteService)
-    const url = `https://api.openrouteservice.org/v2/directions/driving-car?api_key=${process.env.ORS_KEY}`;
-    const r = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ coordinates: [start, end] })
-    });
-
-    const route = await r.json();
-    if (!route.features) {
-      return res.json({ error: "Erreur de calcul GPS" });
-    }
-
-    const distanceMeters = route.features[0].properties.summary.distance;
-    const km = distanceMeters / 1000;
-
-    // 3) Tarif jour/nuit
-    const rate = isNight(date) ? NIGHT_RATE : DAY_RATE;
-
-    let fare = km * rate + km * APPROACH_RATE;
-
-    // réduction façon Uber
-    fare -= UBER_DISCOUNT;
-
-    if (fare < MINIMUM_FARE) fare = MINIMUM_FARE;
-
-    fare = Math.round(fare * 100) / 100;
-
-    res.json({
-      distance_km: km.toFixed(2),
-      fare
-    });
-
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: "Erreur serveur" });
-  }
-});
-
-module.exports = router;
