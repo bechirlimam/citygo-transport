@@ -130,41 +130,16 @@ export default function CityGoSite() {
     <div style={{ padding: "20px" }}>
       <h2>Estimation de trajet</h2>
 
-      <input
-        type="text"
-        placeholder="Adresse de départ"
-        value={pickup}
-        onChange={(e) => setPickup(e.target.value)}
-        style={{ padding: "10px", width: "100%", marginBottom: "10px" }}
-      />
+      <AddressInput
+  label="Adresse de départ"
+  value={pickup}
+  onChange={setPickup}
+  onSelect={(place) => setPickup(place.display_name)}
+/>
 
-      <input
-        type="text"
-        placeholder="Adresse d'arrivée"
-        value={dropoff}
-        onChange={(e) => setDropoff(e.target.value)}
-        style={{ padding: "10px", width: "100%", marginBottom: "10px" }}
-      />
-
-      <button
-        onClick={getEstimate}
-        style={{
-          padding: "10px",
-          background: "#444",
-          color: "white",
-          border: "none",
-          borderRadius: "5px",
-          cursor: "pointer",
-        }}
-      >
-        Estimer le prix
-      </button>
-
-      {estimate && (
-        <p style={{ marginTop: "20px", fontWeight: "bold" }}>
-          {estimate}
-        </p>
-      )}
-    </div>
-  );
-}
+<AddressInput
+  label="Adresse d'arrivée"
+  value={dropoff}
+  onChange={setDropoff}
+  onSelect={(place) => setDropoff(place.display_name)}
+/>
